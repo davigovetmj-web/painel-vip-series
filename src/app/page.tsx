@@ -168,7 +168,23 @@ function pegarDetalhesPagamento(payloadOriginal: unknown) {
 
   const outros =
     total - ativos - vencidos - reembolsados;
+const mensal = clientes.filter(
+  (cliente) =>
+    cliente.status === "ativo" &&
+    cliente.plano?.trim().toLowerCase() === "mensal"
+).length;
 
+const trimestral = clientes.filter(
+  (cliente) =>
+    cliente.status === "ativo" &&
+    cliente.plano?.toLowerCase() === "trimestral"
+).length;
+
+const anual = clientes.filter(
+  (cliente) =>
+    cliente.status === "ativo" &&
+   cliente.plano?.toLowerCase() === "anual"
+).length;
   const hojeTexto = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
     year: "numeric",
@@ -239,152 +255,401 @@ function pegarDetalhesPagamento(payloadOriginal: unknown) {
       <div className="mx-auto max-w-7xl">
         <AutoRefresh />
 
-        <div className="mb-8 flex items-start justify-between gap-4">
-  <div>
-    <h1 className="text-3xl font-bold">
-      Painel Vip Séries
-    </h1>
+        <div className="mb-8 rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 shadow-2xl">
+  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex items-center gap-4">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-purple-700 text-lg font-black shadow-lg">
+        VIP
+      </div>
 
-    <p className="mt-2 text-zinc-400">
-      Visão geral da sua comunidade
+      <div>
+        <p className="text-sm font-medium text-fuchsia-400">
+          DRAMAS PRIME
+        </p>
+
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          Painel Vip Séries
+        </h1>
+
+        <p className="mt-1 text-sm text-zinc-400">
+          Clientes, assinaturas e pagamentos em um só lugar
+        </p>
+      </div>
+    </div>
+
+    <LogoutButton />
+  </div>
+</div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+
+  {/* Clientes cadastrados */}
+  <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-zinc-900 to-purple-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-purple-500/50">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-xl">
+        👥
+      </div>
+
+      <span className="text-xs font-medium text-purple-400">
+        TOTAL
+      </span>
+    </div>
+
+    <p className="text-sm text-zinc-400">
+      Clientes cadastrados
+    </p>
+
+    <p className="mt-2 text-3xl font-bold">
+      {total}
     </p>
   </div>
 
-  <LogoutButton />
+
+  {/* Clientes ativos */}
+  <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-zinc-900 to-emerald-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-emerald-500/50">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-xl">
+        ✅
+      </div>
+
+      <span className="text-xs font-medium text-emerald-400">
+        ATIVOS
+      </span>
+    </div>
+
+    <p className="text-sm text-zinc-400">
+      Clientes ativos
+    </p>
+
+    <p className="mt-2 text-3xl font-bold text-emerald-400">
+      {ativos}
+    </p>
+  </div>
+
+
+  {/* Clientes vencidos */}
+  <div className="rounded-2xl border border-red-500/20 bg-gradient-to-br from-zinc-900 to-red-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-red-500/50">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-xl">
+        ⛔
+      </div>
+
+      <span className="text-xs font-medium text-red-400">
+        VENCIDOS
+      </span>
+    </div>
+
+    <p className="text-sm text-zinc-400">
+      Clientes vencidos
+    </p>
+
+    <p className="mt-2 text-3xl font-bold text-red-400">
+      {vencidos}
+    </p>
+  </div>
+
+
+  {/* Reembolsados */}
+  <div className="rounded-2xl border border-orange-500/20 bg-gradient-to-br from-zinc-900 to-orange-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-orange-500/50">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-xl">
+        ↩️
+      </div>
+
+      <span className="text-xs font-medium text-orange-400">
+        REEMBOLSO
+      </span>
+    </div>
+
+    <p className="text-sm text-zinc-400">
+      Reembolsados
+    </p>
+
+    <p className="mt-2 text-3xl font-bold text-orange-400">
+      {reembolsados}
+    </p>
+  </div>
+
+
+  {/* Outros status */}
+  <div className="rounded-2xl border border-zinc-700 bg-gradient-to-br from-zinc-900 to-zinc-950 p-5 transition duration-200 hover:-translate-y-1 hover:border-zinc-500">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800 text-xl">
+        •••
+      </div>
+
+      <span className="text-xs font-medium text-zinc-400">
+        OUTROS
+      </span>
+    </div>
+
+    <p className="text-sm text-zinc-400">
+      Outros status
+    </p>
+
+    <p className="mt-2 text-3xl font-bold">
+      {outros}
+    </p>
+  </div>
+
+</div>
+{/* ASSINANTES POR PLANO */}
+<div className="mt-8">
+  <div className="mb-4">
+    <h2 className="text-xl font-bold">
+      📦 Assinantes por plano
+    </h2>
+
+    <p className="mt-1 text-sm text-zinc-400">
+      Distribuição dos clientes ativos
+    </p>
+  </div>
+
+  <div className="grid gap-4 md:grid-cols-3">
+
+    {/* Mensal */}
+    <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-zinc-900 to-purple-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-purple-500/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-xl">
+          📅
+        </div>
+
+        <span className="text-xs font-medium text-purple-400">
+          MENSAL
+        </span>
+      </div>
+
+      <p className="text-sm text-zinc-400">
+        Assinantes ativos
+      </p>
+
+      <p className="mt-2 text-3xl font-bold text-purple-400">
+        {mensal}
+      </p>
+    </div>
+
+    {/* Trimestral */}
+    <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-zinc-900 to-blue-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-blue-500/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-xl">
+          📆
+        </div>
+
+        <span className="text-xs font-medium text-blue-400">
+          TRIMESTRAL
+        </span>
+      </div>
+
+      <p className="text-sm text-zinc-400">
+        Assinantes ativos
+      </p>
+
+      <p className="mt-2 text-3xl font-bold text-blue-400">
+        {trimestral}
+      </p>
+    </div>
+
+    {/* Anual */}
+    <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-zinc-900 to-amber-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-amber-500/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-xl">
+          👑
+        </div>
+
+        <span className="text-xs font-medium text-amber-400">
+          ANUAL
+        </span>
+      </div>
+
+      <p className="text-sm text-zinc-400">
+        Assinantes ativos
+      </p>
+
+      <p className="mt-2 text-3xl font-bold text-amber-400">
+        {anual}
+      </p>
+    </div>
+
+  </div>
+</div>
+       <div className="mt-8 grid gap-4 md:grid-cols-3">
+
+  {/* Vencem hoje */}
+  <div className="rounded-2xl border border-red-500/20 bg-gradient-to-br from-zinc-900 to-red-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-red-500/50">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-xl">
+        ⏰
+      </div>
+
+      <span className="text-xs font-medium text-red-400">
+        URGENTE
+      </span>
+    </div>
+
+    <p className="text-sm text-zinc-400">
+      Vencem hoje
+    </p>
+
+    <p className="mt-2 text-3xl font-bold text-red-400">
+      {vencemHoje}
+    </p>
+  </div>
+
+
+  {/* Próximos 3 dias */}
+  <div className="rounded-2xl border border-yellow-500/20 bg-gradient-to-br from-zinc-900 to-yellow-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-yellow-500/50">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/10 text-xl">
+        ⚠️
+      </div>
+
+      <span className="text-xs font-medium text-yellow-400">
+        ATENÇÃO
+      </span>
+    </div>
+
+    <p className="text-sm text-zinc-400">
+      Vencem nos próximos 3 dias
+    </p>
+
+    <p className="mt-2 text-3xl font-bold text-yellow-400">
+      {vencem3Dias}
+    </p>
+  </div>
+
+
+  {/* Entre 4 e 7 dias */}
+  <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-zinc-900 to-blue-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-blue-500/50">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-xl">
+        📅
+      </div>
+
+      <span className="text-xs font-medium text-blue-400">
+        EM BREVE
+      </span>
+    </div>
+
+    <p className="text-sm text-zinc-400">
+      Vencem entre 4 e 7 dias
+    </p>
+
+    <p className="mt-2 text-3xl font-bold text-blue-400">
+      {vencem7Dias}
+    </p>
+  </div>
+
 </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <p className="text-sm text-zinc-400">
-              Clientes cadastrados
-            </p>
-            <p className="mt-2 text-4xl font-bold">
-              {total}
-            </p>
-          </div>
+ {/* PAGAMENTOS */}
+<div className="mt-10">
+  <div className="mb-4">
+    <h2 className="text-xl font-bold">
+      💰 Pagamentos
+    </h2>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <p className="text-sm text-zinc-400">
-              Clientes ativos
-            </p>
-            <p className="mt-2 text-4xl font-bold">
-              {ativos}
-            </p>
-          </div>
+    <p className="mt-1 text-sm text-zinc-400">
+      Resumo financeiro do mês atual
+    </p>
+  </div>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <p className="text-sm text-zinc-400">
-              Clientes vencidos
-            </p>
-            <p className="mt-2 text-4xl font-bold">
-              {vencidos}
-            </p>
-          </div>
+  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <p className="text-sm text-zinc-400">
-              Reembolsados
-            </p>
-            <p className="mt-2 text-4xl font-bold">
-              {reembolsados}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <p className="text-sm text-zinc-400">
-              Outros status
-            </p>
-            <p className="mt-2 text-4xl font-bold">
-              {outros}
-            </p>
-          </div>
+    {/* Pagamentos aprovados */}
+    <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-zinc-900 to-purple-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-purple-500/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-xl">
+          💳
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <p className="text-sm text-zinc-400">
-              ⏰ Vencem hoje
-            </p>
-            <p className="mt-2 text-4xl font-bold">
-              {vencemHoje}
-            </p>
-          </div>
+        <span className="text-xs font-medium text-purple-400">
+          VENDAS
+        </span>
+      </div>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <p className="text-sm text-zinc-400">
-              ⚠️ Vencem nos próximos 3 dias
-            </p>
-            <p className="mt-2 text-4xl font-bold">
-              {vencem3Dias}
-            </p>
-          </div>
+      <p className="text-sm text-zinc-400">
+        Pagamentos aprovados este mês
+      </p>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <p className="text-sm text-zinc-400">
-              📅 Vencem entre 4 e 7 dias
-            </p>
-            <p className="mt-2 text-4xl font-bold">
-              {vencem7Dias}
-            </p>
-          </div>
+      <p className="mt-2 text-3xl font-bold">
+        {pagamentosMes.length}
+      </p>
+    </div>
+
+
+    {/* Receita aprovada */}
+    <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-zinc-900 to-emerald-950/30 p-5 shadow-lg shadow-emerald-950/20 transition duration-200 hover:-translate-y-1 hover:border-emerald-500/60">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-xl">
+          💰
         </div>
 
-        <div className="mt-8">
-          <h2 className="mb-4 text-xl font-bold">
-            💰 Pagamentos
-          </h2>
+        <span className="text-xs font-medium text-emerald-400">
+          RECEITA
+        </span>
+      </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-              <p className="text-sm text-zinc-400">
-                Pagamentos aprovados este mês
-              </p>
+      <p className="text-sm text-zinc-400">
+        Receita aprovada este mês
+      </p>
 
-              <p className="mt-2 text-4xl font-bold">
-                {pagamentosMes.length}
-              </p>
-            </div>
+      <p className="mt-2 text-3xl font-bold text-emerald-400">
+        {receitaMes.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        })}
+      </p>
+    </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-              <p className="text-sm text-zinc-400">
-                Receita aprovada este mês
-              </p>
 
-              <p className="mt-2 text-4xl font-bold">
-                {receitaMes.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-              <p className="text-sm text-zinc-400">
-                🔄 Renovações este mês
-              </p>
-
-              <p className="mt-2 text-4xl font-bold">
-                {renovacoesMes.length}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-              <p className="text-sm text-zinc-400">
-                💰 Receita de renovações
-              </p>
-
-              <p className="mt-2 text-4xl font-bold">
-                {receitaRenovacoesMes.toLocaleString(
-                  "pt-BR",
-                  {
-                    style: "currency",
-                    currency: "BRL",
-                  }
-                )}
-              </p>
-            </div>
-          </div>
+    {/* Renovações */}
+    <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-zinc-900 to-blue-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-blue-500/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-xl">
+          🔄
         </div>
+
+        <span className="text-xs font-medium text-blue-400">
+          RENOVAÇÕES
+        </span>
+      </div>
+
+      <p className="text-sm text-zinc-400">
+        Renovações este mês
+      </p>
+
+      <p className="mt-2 text-3xl font-bold text-blue-400">
+        {renovacoesMes.length}
+      </p>
+    </div>
+
+
+    {/* Receita de renovações */}
+    <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-zinc-900 to-amber-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-amber-500/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-xl">
+          🪙
+        </div>
+
+        <span className="text-xs font-medium text-amber-400">
+          RENOVAÇÃO
+        </span>
+      </div>
+
+      <p className="text-sm text-zinc-400">
+        Receita de renovações
+      </p>
+
+      <p className="mt-2 text-3xl font-bold text-amber-400">
+        {receitaRenovacoesMes.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        })}
+      </p>
+    </div>
+
+  </div>
+</div>       
 
 <div className="mt-10">
   <div className="mb-4">
