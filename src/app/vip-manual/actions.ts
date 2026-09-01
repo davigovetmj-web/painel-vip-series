@@ -1,10 +1,20 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import {
+  revalidatePath,
+} from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import {
+  redirect,
+} from "next/navigation";
+
+import {
+  createClient,
+} from "@/lib/supabase/server";
+
+import {
+  supabaseAdmin,
+} from "@/lib/supabase-admin";
 
 
 // ========================================
@@ -12,16 +22,25 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 // ========================================
 
 type AcaoBotManual = {
+
   action:
     | "ativar_cliente"
     | "pagamento_confirmado";
 
-  telegram_id: number;
-  plano: string;
-  valor: number;
-  data_vencimento: string;
+  telegram_id:
+    number;
 
-  gerar_link?: boolean;
+  plano:
+    string;
+
+  valor:
+    number;
+
+  data_vencimento:
+    string;
+
+  gerar_link?:
+    boolean;
 };
 
 
@@ -30,6 +49,7 @@ type AcaoBotManual = {
 // ========================================
 
 function dataHojeSaoPaulo() {
+
   const partes =
     new Intl.DateTimeFormat(
       "en-CA",
@@ -37,41 +57,55 @@ function dataHojeSaoPaulo() {
         timeZone:
           "America/Sao_Paulo",
 
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
+        year:
+          "numeric",
+
+        month:
+          "2-digit",
+
+        day:
+          "2-digit"
       }
     ).formatToParts(
       new Date()
     );
 
+
   const ano =
     partes.find(
       (parte) =>
-        parte.type === "year"
+        parte.type ===
+        "year"
     )?.value;
+
 
   const mes =
     partes.find(
       (parte) =>
-        parte.type === "month"
+        parte.type ===
+        "month"
     )?.value;
+
 
   const dia =
     partes.find(
       (parte) =>
-        parte.type === "day"
+        parte.type ===
+        "day"
     )?.value;
+
 
   if (
     !ano ||
     !mes ||
     !dia
   ) {
+
     throw new Error(
       "Não foi possível obter a data atual."
     );
   }
+
 
   return `${ano}-${mes}-${dia}`;
 }
@@ -85,6 +119,7 @@ function adicionarDias(
   dataISO: string,
   dias: number
 ) {
+
   const [
     ano,
     mes,
@@ -92,7 +127,10 @@ function adicionarDias(
   ] =
     dataISO
       .split("-")
-      .map(Number);
+      .map(
+        Number
+      );
+
 
   const data =
     new Date(
@@ -103,14 +141,19 @@ function adicionarDias(
       )
     );
 
+
   data.setUTCDate(
     data.getUTCDate() +
-      dias
+    dias
   );
+
 
   return data
     .toISOString()
-    .slice(0, 10);
+    .slice(
+      0,
+      10
+    );
 }
 
 
@@ -119,12 +162,15 @@ function adicionarDias(
 // ========================================
 
 async function chamarBotManual(
-  payload: AcaoBotManual
+  payload:
+    AcaoBotManual
 ) {
+
   const supabaseUrl =
     process.env
       .NEXT_PUBLIC_SUPABASE_URL
       ?.trim();
+
 
   const internalSecret =
     process.env
@@ -133,6 +179,7 @@ async function chamarBotManual(
 
 
   if (!supabaseUrl) {
+
     throw new Error(
       "NEXT_PUBLIC_SUPABASE_URL não configurada."
     );
@@ -140,6 +187,7 @@ async function chamarBotManual(
 
 
   if (!internalSecret) {
+
     throw new Error(
       "VIP_MANUAL_INTERNAL_SECRET não configurado."
     );
@@ -150,9 +198,12 @@ async function chamarBotManual(
     await fetch(
       `${supabaseUrl}/functions/v1/telegram-manual-webhook`,
       {
-        method: "POST",
+
+        method:
+          "POST",
 
         headers: {
+
           "Content-Type":
             "application/json",
 
@@ -165,7 +216,9 @@ async function chamarBotManual(
             payload
           ),
 
-        cache: "no-store"
+        cache:
+          "no-store"
+
       }
     );
 
@@ -175,27 +228,40 @@ async function chamarBotManual(
 
 
   let resultado:
-    Record<string, unknown> = {};
+    Record<
+      string,
+      unknown
+    > = {};
 
 
   if (texto) {
+
     try {
+
       resultado =
-        JSON.parse(texto);
+        JSON.parse(
+          texto
+        );
+
     } catch {
+
       resultado = {};
+
     }
   }
 
 
   if (
     !response.ok ||
-    resultado?.ok !== true
+    resultado.ok !==
+      true
   ) {
+
     console.error(
       "Erro Davi VIP:",
       texto
     );
+
 
     throw new Error(
       "O Davi VIP não conseguiu processar a solicitação."
@@ -212,8 +278,10 @@ async function chamarBotManual(
 // ========================================
 
 export async function cadastrarVipManual(
-  formData: FormData
+  formData:
+    FormData
 ) {
+
   const supabase =
     await createClient();
 
@@ -228,7 +296,9 @@ export async function cadastrarVipManual(
 
 
   if (!user) {
-    redirect("/login");
+    redirect(
+      "/login"
+    );
   }
 
 
@@ -245,7 +315,8 @@ export async function cadastrarVipManual(
       formData.get(
         "telegram_username"
       ) ?? ""
-    ).trim() || null;
+    ).trim() ||
+    null;
 
 
   const nome =
@@ -253,7 +324,8 @@ export async function cadastrarVipManual(
       formData.get(
         "nome"
       ) ?? ""
-    ).trim() || null;
+    ).trim() ||
+    null;
 
 
   const planoId =
@@ -271,7 +343,10 @@ export async function cadastrarVipManual(
       ) ?? ""
     )
       .trim()
-      .replace(",", ".");
+      .replace(
+        ",",
+        "."
+      );
 
 
   const valor =
@@ -283,6 +358,7 @@ export async function cadastrarVipManual(
   const diasGraca =
     Math.max(
       0,
+
       Number(
         formData.get(
           "dias_graca"
@@ -292,6 +368,7 @@ export async function cadastrarVipManual(
 
 
   if (!telegramId) {
+
     throw new Error(
       "Telegram ID inválido."
     );
@@ -299,6 +376,7 @@ export async function cadastrarVipManual(
 
 
   if (!planoId) {
+
     throw new Error(
       "Plano não informado."
     );
@@ -306,19 +384,28 @@ export async function cadastrarVipManual(
 
 
   if (
-    !Number.isFinite(valor) ||
+    !Number.isFinite(
+      valor
+    ) ||
     valor < 0
   ) {
+
     throw new Error(
       "Valor inválido."
     );
   }
 
 
-  // Busca duração do plano
+  // ======================================
+  // PLANO
+  // ======================================
+
   const {
-    data: plano,
-    error: planoError
+    data:
+      plano,
+
+    error:
+      planoError
   } =
     await supabaseAdmin
       .from(
@@ -342,6 +429,7 @@ export async function cadastrarVipManual(
     planoError ||
     !plano
   ) {
+
     throw new Error(
       "Plano não encontrado ou inativo."
     );
@@ -366,16 +454,23 @@ export async function cadastrarVipManual(
       .toISOString();
 
 
-  // Cadastra cliente
+  // ======================================
+  // CADASTRA
+  // ======================================
+
   const {
-    data: cliente,
-    error: clienteError
+    data:
+      cliente,
+
+    error:
+      clienteError
   } =
     await supabaseAdmin
       .from(
         "vip_manual_clientes"
       )
       .insert({
+
         nome,
 
         telegram_id:
@@ -406,6 +501,7 @@ export async function cadastrarVipManual(
 
         updated_at:
           agora
+
       })
       .select(
         "id, telegram_id, plano, valor, data_vencimento"
@@ -417,10 +513,12 @@ export async function cadastrarVipManual(
     clienteError ||
     !cliente
   ) {
+
     console.error(
       "Erro cadastrando VIP Manual:",
       clienteError
     );
+
 
     throw new Error(
       "Não foi possível cadastrar o cliente."
@@ -429,12 +527,13 @@ export async function cadastrarVipManual(
 
 
   // ======================================
-  // AVISA CLIENTE NO DAVI VIP
+  // AVISA DAVI VIP
   // ======================================
 
   try {
 
     await chamarBotManual({
+
       action:
         "ativar_cliente",
 
@@ -457,12 +556,12 @@ export async function cadastrarVipManual(
         String(
           cliente.data_vencimento
         )
+
     });
+
 
   } catch (error) {
 
-    // O cliente continua cadastrado mesmo
-    // se o Telegram estiver temporariamente fora.
     console.error(
       "Cliente cadastrado, mas houve erro enviando ativação:",
       error
@@ -481,8 +580,10 @@ export async function cadastrarVipManual(
 // ========================================
 
 export async function confirmarPagamentoVipManual(
-  formData: FormData
+  formData:
+    FormData
 ) {
+
   const supabase =
     await createClient();
 
@@ -497,7 +598,10 @@ export async function confirmarPagamentoVipManual(
 
 
   if (!user) {
-    redirect("/login");
+
+    redirect(
+      "/login"
+    );
   }
 
 
@@ -509,29 +613,65 @@ export async function confirmarPagamentoVipManual(
     );
 
 
+  const confirmacaoId =
+    String(
+      formData.get(
+        "confirmacao_id"
+      ) ?? ""
+    ).trim();
+
+
   if (!clienteId) {
+
     throw new Error(
       "Cliente não informado."
     );
   }
 
 
+  if (
+    !confirmacaoId
+  ) {
+
+    throw new Error(
+      "ID da confirmação não informado."
+    );
+  }
+
+
+  const uuidValido =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+      .test(
+        confirmacaoId
+      );
+
+
+  if (!uuidValido) {
+
+    throw new Error(
+      "ID da confirmação inválido."
+    );
+  }
+
+
   // ======================================
-  // DADOS ANTES DA RENOVAÇÃO
+  // CLIENTE ANTES DA RENOVAÇÃO
   // ======================================
 
   const {
-    data: clienteAntes,
-    error: clienteAntesError
+    data:
+      clienteAntes,
+
+    error:
+      clienteAntesError
   } =
     await supabaseAdmin
       .from(
         "vip_manual_clientes"
       )
       .select(
-  "id, telegram_id, plano, valor, data_vencimento, status, removido_telegram_em"
-)
-      
+        "id, telegram_id, plano, valor, data_vencimento, status, removido_telegram_em"
+      )
       .eq(
         "id",
         clienteId
@@ -543,15 +683,13 @@ export async function confirmarPagamentoVipManual(
     clienteAntesError ||
     !clienteAntes
   ) {
+
     throw new Error(
       "Cliente não encontrado."
     );
   }
 
 
-  // Se já tinha sido removido,
-  // depois do pagamento precisará
-  // receber um novo link.
   const precisaNovoLink =
     Boolean(
       clienteAntes
@@ -560,28 +698,78 @@ export async function confirmarPagamentoVipManual(
 
 
   // ======================================
-  // RENOVA + REGISTRA HISTÓRICO
+  // RENOVAÇÃO IDEMPOTENTE
   // ======================================
 
   const {
-    error: pagamentoError
+    data:
+      pagamentoResultado,
+
+    error:
+      pagamentoError
   } =
     await supabaseAdmin.rpc(
       "confirmar_pagamento_vip_manual",
       {
+
         p_cliente_id:
-          clienteId
+          clienteId,
+
+        p_confirmacao_id:
+          confirmacaoId
+
       }
     );
 
 
-  if (pagamentoError) {
+  if (
+    pagamentoError
+  ) {
+
     console.error(
       "Erro confirmando pagamento:",
       pagamentoError
     );
 
+
     throw pagamentoError;
+  }
+
+
+  const resultado =
+    pagamentoResultado as
+      | {
+          ok?:
+            boolean;
+
+          ja_processado?:
+            boolean;
+
+          data_vencimento?:
+            string;
+        }
+      | null;
+
+
+  // A mesma confirmação já foi executada.
+  // Não renova e não envia outra mensagem.
+  if (
+    resultado
+      ?.ja_processado ===
+    true
+  ) {
+
+    console.log(
+      "Pagamento já processado. Renovação duplicada ignorada."
+    );
+
+
+    revalidatePath(
+      "/vip-manual"
+    );
+
+
+    return;
   }
 
 
@@ -590,8 +778,11 @@ export async function confirmarPagamentoVipManual(
   // ======================================
 
   const {
-    data: clienteDepois,
-    error: clienteDepoisError
+    data:
+      clienteDepois,
+
+    error:
+      clienteDepoisError
   } =
     await supabaseAdmin
       .from(
@@ -611,6 +802,7 @@ export async function confirmarPagamentoVipManual(
     clienteDepoisError ||
     !clienteDepois
   ) {
+
     throw new Error(
       "Pagamento confirmado, mas não foi possível consultar a nova validade."
     );
@@ -624,6 +816,7 @@ export async function confirmarPagamentoVipManual(
   try {
 
     await chamarBotManual({
+
       action:
         "pagamento_confirmado",
 
@@ -653,13 +846,12 @@ export async function confirmarPagamentoVipManual(
 
       gerar_link:
         precisaNovoLink
+
     });
+
 
   } catch (error) {
 
-    // O pagamento continua confirmado.
-    // Falha no Telegram não desfaz
-    // uma renovação financeira.
     console.error(
       "Pagamento confirmado, mas houve erro enviando mensagem:",
       error
