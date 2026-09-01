@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import {
   cadastrarVipManual,
+  reenviarAcessoVipManual,
 } from "./actions";
 
 import ConfirmarPagamentoManualButton from "@/components/confirmar-pagamento-manual-button";
@@ -701,19 +702,48 @@ export default async function VipManualPage() {
 
                         <td className="p-4">
 
-                          <ConfirmarPagamentoManualButton
-                            clienteId={
-                              Number(
-                                cliente.id
-                              )
-                            }
-                            clienteNome={
-                              cliente.nome ||
-                              "Cliente"
-                            }
-                          />
+  <div className="flex flex-col gap-2">
 
-                        </td>
+    <ConfirmarPagamentoManualButton
+      clienteId={
+        Number(
+          cliente.id
+        )
+      }
+      clienteNome={
+        cliente.nome ||
+        "Cliente"
+      }
+    />
+
+
+    <form
+      action={
+        reenviarAcessoVipManual
+      }
+    >
+
+      <input
+        type="hidden"
+        name="cliente_id"
+        value={
+          cliente.id
+        }
+      />
+
+
+      <button
+        type="submit"
+        className="w-full rounded-xl bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20"
+      >
+        🔄 Reenviar acesso
+      </button>
+
+    </form>
+
+  </div>
+
+</td>
 
 
                       </tr>

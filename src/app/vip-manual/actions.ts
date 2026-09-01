@@ -863,3 +863,133 @@ export async function confirmarPagamentoVipManual(
     "/vip-manual"
   );
 }
+
+// ========================================
+// REENVIAR ACESSO AO VIP
+// ========================================
+
+export async function reenviarAcessoVipManual(
+  formData: FormData
+) {
+
+  const supabase =
+    await createClient();
+
+
+  const {
+    data: {
+      user
+    }
+  } =
+    await supabase.auth
+      .getUser();
+
+
+  if (!user) {
+    redirect(
+      "/login"
+    );
+  }
+
+
+  const clienteId =
+    Number(
+      formData.get(
+        "cliente_id"
+      )
+    );
+
+
+  if (!clienteId) {
+    throw new Error(
+      "Cliente não informado."
+    );
+  }
+
+
+  const {
+    data: cliente,
+    error: clienteError
+  } =
+    await supabaseAdmin
+      .from(
+        "vip_manual_clientes"
+      )
+      .select(
+        "id, telegram_id, plano, valor, data_vencimento, status"
+      )
+      .eq(
+        "id",
+        clienteId
+      )
+      .single();
+
+
+  if (
+    clienteError ||
+    !cliente
+  ) {
+    throw new Error(
+      "Cliente não encontrado."
+    );
+  }
+
+
+  const hoje =
+    dataHojeSaoPaulo();
+
+
+  const vencimento =
+    String(
+      cliente.data_vencimento ??
+      ""
+    )
+      .slice(
+        0,
+        10
+      );
+
+
+  if (
+    cliente.status !== "ativo" ||
+    !vencimento ||
+    vencimento < hoje
+  ) {
+    throw new Error(
+      "O cliente não possui uma assinatura ativa."
+    );
+  }
+
+
+  await chamarBotManual({
+
+    action:
+      "ativar_cliente",
+
+    telegram_id:
+      Number(
+        cliente.telegram_id
+      ),
+
+    plano:
+      String(
+        cliente.plano
+      ),
+
+    valor:
+      Number(
+        cliente.valor
+      ),
+
+    data_vencimento:
+      String(
+        cliente.data_vencimento
+      )
+
+  });
+
+
+  revalidatePath(
+    "/vip-manual"
+  );
+}
