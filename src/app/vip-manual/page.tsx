@@ -5,10 +5,10 @@ import Link from "next/link";
 
 import {
   cadastrarVipManual,
-  reenviarAcessoVipManual,
 } from "./actions";
 
 import ConfirmarPagamentoManualButton from "@/components/confirmar-pagamento-manual-button";
+import ReenviarAcessoManualButton from "@/components/reenviar-acesso-manual-button";
 
 
 export const dynamic = "force-dynamic";
@@ -717,29 +717,17 @@ export default async function VipManualPage() {
     />
 
 
-    <form
-      action={
-        reenviarAcessoVipManual
-      }
-    >
-
-      <input
-        type="hidden"
-        name="cliente_id"
-        value={
-          cliente.id
-        }
-      />
-
-
-      <button
-        type="submit"
-        className="w-full rounded-xl bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20"
-      >
-        🔄 Reenviar acesso
-      </button>
-
-    </form>
+    <ReenviarAcessoManualButton
+  clienteId={
+    Number(
+      cliente.id
+    )
+  }
+  clienteNome={
+    cliente.nome ||
+    "Cliente"
+  }
+/>
 
   </div>
 
