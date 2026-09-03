@@ -34,6 +34,92 @@ function formatarData(
 }
 
 
+function dataHojeSaoPaulo() {
+  const partes =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:
+          "America/Sao_Paulo",
+
+        year:
+          "numeric",
+
+        month:
+          "2-digit",
+
+        day:
+          "2-digit"
+      }
+    ).formatToParts(
+      new Date()
+    );
+
+  const ano =
+    partes.find(
+      (parte) =>
+        parte.type === "year"
+    )?.value;
+
+  const mes =
+    partes.find(
+      (parte) =>
+        parte.type === "month"
+    )?.value;
+
+  const dia =
+    partes.find(
+      (parte) =>
+        parte.type === "day"
+    )?.value;
+
+  if (
+    !ano ||
+    !mes ||
+    !dia
+  ) {
+    throw new Error(
+      "Não foi possível obter a data atual."
+    );
+  }
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+
+function adicionarDiasISO(
+  dataISO: string,
+  dias: number
+) {
+  const [
+    ano,
+    mes,
+    dia
+  ] =
+    dataISO
+      .split("-")
+      .map(Number);
+
+  const data =
+    new Date(
+      Date.UTC(
+        ano,
+        mes - 1,
+        dia
+      )
+    );
+
+  data.setUTCDate(
+    data.getUTCDate() +
+    dias
+  );
+
+  return data
+    .toISOString()
+    .slice(0, 10);
+}
+
+
 export default async function VipManualPage() {
 
   const supabase =
@@ -185,11 +271,58 @@ export default async function VipManualPage() {
     );
 
 
-  const ativos =
+  const hoje =
+    dataHojeSaoPaulo();
+
+
+  const limite3Dias =
+    adicionarDiasISO(
+      hoje,
+      3
+    );
+
+
+  const clientesAtivos =
     listaClientes.filter(
       (cliente) =>
         cliente.status ===
         "ativo"
+    );
+
+
+  const ativos =
+    clientesAtivos.length;
+
+
+  const vencendoHoje =
+    clientesAtivos.filter(
+      (cliente) =>
+        String(
+          cliente.data_vencimento ??
+          ""
+        )
+          .slice(0, 10) ===
+        hoje
+    ).length;
+
+
+  const vencendo3Dias =
+    clientesAtivos.filter(
+      (cliente) => {
+        const vencimento =
+          String(
+            cliente.data_vencimento ??
+            ""
+          )
+            .slice(0, 10);
+
+        return (
+          vencimento >
+            hoje &&
+          vencimento <=
+            limite3Dias
+        );
+      }
     ).length;
 
 
@@ -199,6 +332,47 @@ export default async function VipManualPage() {
         cliente.status ===
         "vencido"
     ).length;
+
+
+  const receitaMensalEstimada =
+    clientesAtivos.reduce(
+      (
+        total,
+        cliente
+      ) => {
+        const plano =
+          listaPlanos.find(
+            (item) =>
+              item.nome ===
+              cliente.plano
+          );
+
+        const duracaoDias =
+          Math.max(
+            1,
+            Number(
+              plano?.duracao_dias ??
+              30
+            )
+          );
+
+        const valor =
+          Number(
+            cliente.valor ??
+            0
+          );
+
+        return (
+          total +
+          valor *
+            (
+              30 /
+              duracaoDias
+            )
+        );
+      },
+      0
+    );
 
 
   return (
@@ -250,31 +424,57 @@ export default async function VipManualPage() {
             RESUMO
         ====================================== */}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 
 
-          <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-zinc-900 to-purple-950/20 p-5">
+          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-zinc-900 to-emerald-950/20 p-5">
 
             <p className="text-sm text-zinc-400">
-              Clientes manuais
+              ✅ Ativos
             </p>
 
-            <p className="mt-2 text-3xl font-bold text-purple-400">
-              {listaClientes.length}
+            <p className="mt-2 text-3xl font-bold text-emerald-400">
+              {ativos}
+            </p>
+
+            <p className="mt-1 text-xs text-zinc-500">
+              de {listaClientes.length} clientes
             </p>
 
           </div>
 
 
 
-          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-zinc-900 to-emerald-950/20 p-5">
+          <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-zinc-900 to-amber-950/20 p-5">
 
             <p className="text-sm text-zinc-400">
-              Ativos
+              ⏰ Vencendo hoje
             </p>
 
-            <p className="mt-2 text-3xl font-bold text-emerald-400">
-              {ativos}
+            <p className="mt-2 text-3xl font-bold text-amber-400">
+              {vencendoHoje}
+            </p>
+
+            <p className="mt-1 text-xs text-zinc-500">
+              precisam de atenção
+            </p>
+
+          </div>
+
+
+
+          <div className="rounded-2xl border border-orange-500/20 bg-gradient-to-br from-zinc-900 to-orange-950/20 p-5">
+
+            <p className="text-sm text-zinc-400">
+              📅 Próx. 3 dias
+            </p>
+
+            <p className="mt-2 text-3xl font-bold text-orange-400">
+              {vencendo3Dias}
+            </p>
+
+            <p className="mt-1 text-xs text-zinc-500">
+              vencimentos próximos
             </p>
 
           </div>
@@ -284,11 +484,45 @@ export default async function VipManualPage() {
           <div className="rounded-2xl border border-red-500/20 bg-gradient-to-br from-zinc-900 to-red-950/20 p-5">
 
             <p className="text-sm text-zinc-400">
-              Vencidos
+              ❌ Vencidos
             </p>
 
             <p className="mt-2 text-3xl font-bold text-red-400">
               {vencidos}
+            </p>
+
+            <p className="mt-1 text-xs text-zinc-500">
+              fora da validade
+            </p>
+
+          </div>
+
+
+
+          <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-zinc-900 to-purple-950/20 p-5">
+
+            <p className="text-sm text-zinc-400">
+              💰 Receita mensal est.
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-purple-400">
+              {
+                receitaMensalEstimada
+                  .toLocaleString(
+                    "pt-BR",
+                    {
+                      style:
+                        "currency",
+
+                      currency:
+                        "BRL"
+                    }
+                  )
+              }
+            </p>
+
+            <p className="mt-1 text-xs text-zinc-500">
+              equivalente dos ativos
             </p>
 
           </div>
@@ -298,16 +532,21 @@ export default async function VipManualPage() {
           <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-zinc-900 to-blue-950/20 p-5">
 
             <p className="text-sm text-zinc-400">
-              Aguardando cadastro
+              🤖 Aguardando cadastro
             </p>
 
             <p className="mt-2 text-3xl font-bold text-blue-400">
               {usuariosDisponiveis.length}
             </p>
 
+            <p className="mt-1 text-xs text-zinc-500">
+              confirmaram o Telegram
+            </p>
+
           </div>
 
         </div>
+
 
 
 
