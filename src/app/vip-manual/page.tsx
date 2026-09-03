@@ -120,7 +120,57 @@ function adicionarDiasISO(
 }
 
 
-export default async function VipManualPage() {
+type VipManualPageProps = {
+  searchParams?: Promise<{
+    q?: string;
+    status?: string;
+    plano?: string;
+    vencimento?: string;
+  }>;
+};
+
+
+export default async function VipManualPage({
+  searchParams
+}: VipManualPageProps) {
+
+  const params =
+    (await searchParams) ??
+    {};
+
+
+  const busca =
+    String(
+      params.q ??
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const filtroStatus =
+    String(
+      params.status ??
+      ""
+    )
+      .trim();
+
+
+  const filtroPlano =
+    String(
+      params.plano ??
+      ""
+    )
+      .trim();
+
+
+  const filtroVencimento =
+    String(
+      params.vencimento ??
+      ""
+    )
+      .trim();
+
 
   const supabase =
     await createClient();
@@ -372,6 +422,153 @@ export default async function VipManualPage() {
         );
       },
       0
+    );
+
+
+
+  const limite7Dias =
+    adicionarDiasISO(
+      hoje,
+      7
+    );
+
+
+  const clientesFiltrados =
+    listaClientes.filter(
+      (cliente) => {
+
+        const nome =
+          String(
+            cliente.nome ??
+            ""
+          )
+            .toLowerCase();
+
+
+        const username =
+          String(
+            cliente.telegram_username ??
+            ""
+          )
+            .toLowerCase();
+
+
+        const telegramId =
+          String(
+            cliente.telegram_id ??
+            ""
+          )
+            .toLowerCase();
+
+
+        const planoCliente =
+          String(
+            cliente.plano ??
+            ""
+          );
+
+
+        const statusCliente =
+          String(
+            cliente.status ??
+            ""
+          );
+
+
+        const vencimentoCliente =
+          String(
+            cliente.data_vencimento ??
+            ""
+          )
+            .slice(
+              0,
+              10
+            );
+
+
+        const correspondeBusca =
+          !busca ||
+          nome.includes(
+            busca
+          ) ||
+          username.includes(
+            busca.replace(
+              "@",
+              ""
+            )
+          ) ||
+          telegramId.includes(
+            busca
+          );
+
+
+        const correspondeStatus =
+          !filtroStatus ||
+          statusCliente ===
+            filtroStatus;
+
+
+        const correspondePlano =
+          !filtroPlano ||
+          planoCliente ===
+            filtroPlano;
+
+
+        let correspondeVencimento =
+          true;
+
+
+        if (
+          filtroVencimento ===
+          "hoje"
+        ) {
+
+          correspondeVencimento =
+            vencimentoCliente ===
+            hoje;
+
+        } else if (
+          filtroVencimento ===
+          "3dias"
+        ) {
+
+          correspondeVencimento =
+            vencimentoCliente >
+              hoje &&
+            vencimentoCliente <=
+              limite3Dias;
+
+        } else if (
+          filtroVencimento ===
+          "7dias"
+        ) {
+
+          correspondeVencimento =
+            vencimentoCliente >
+              hoje &&
+            vencimentoCliente <=
+              limite7Dias;
+
+        } else if (
+          filtroVencimento ===
+          "vencidos"
+        ) {
+
+          correspondeVencimento =
+            vencimentoCliente <
+              hoje ||
+            statusCliente ===
+              "vencido";
+        }
+
+
+        return (
+          correspondeBusca &&
+          correspondeStatus &&
+          correspondePlano &&
+          correspondeVencimento
+        );
+      }
     );
 
 
@@ -809,9 +1006,195 @@ export default async function VipManualPage() {
           </div>
 
 
-          <div className="overflow-hidden rounded-2xl border border-zinc-800">
+          {/* =====================================
+              BUSCA E FILTROS
+          ====================================== */}
 
-            <table className="w-full text-left">
+          <form
+            method="GET"
+            className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
+          >
+
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+
+
+              <div className="xl:col-span-2">
+
+                <label className="mb-1 block text-xs text-zinc-400">
+                  🔎 Buscar cliente
+                </label>
+
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={
+                    String(
+                      params.q ??
+                      ""
+                    )
+                  }
+                  placeholder="Nome, @usuário ou Telegram ID"
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-zinc-500"
+                />
+
+              </div>
+
+
+              <div>
+
+                <label className="mb-1 block text-xs text-zinc-400">
+                  Status
+                </label>
+
+                <select
+                  name="status"
+                  defaultValue={
+                    filtroStatus
+                  }
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
+                >
+                  <option value="">
+                    Todos
+                  </option>
+
+                  <option value="ativo">
+                    Ativos
+                  </option>
+
+                  <option value="vencido">
+                    Vencidos
+                  </option>
+                </select>
+
+              </div>
+
+
+              <div>
+
+                <label className="mb-1 block text-xs text-zinc-400">
+                  Plano
+                </label>
+
+                <select
+                  name="plano"
+                  defaultValue={
+                    filtroPlano
+                  }
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
+                >
+                  <option value="">
+                    Todos
+                  </option>
+
+                  {
+                    listaPlanos.map(
+                      (plano) => (
+
+                        <option
+                          key={
+                            plano.id
+                          }
+                          value={
+                            plano.nome
+                          }
+                        >
+                          {
+                            plano.nome
+                          }
+                        </option>
+
+                      )
+                    )
+                  }
+                </select>
+
+              </div>
+
+
+              <div>
+
+                <label className="mb-1 block text-xs text-zinc-400">
+                  Vencimento
+                </label>
+
+                <select
+                  name="vencimento"
+                  defaultValue={
+                    filtroVencimento
+                  }
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
+                >
+                  <option value="">
+                    Todos
+                  </option>
+
+                  <option value="hoje">
+                    Hoje
+                  </option>
+
+                  <option value="3dias">
+                    Próximos 3 dias
+                  </option>
+
+                  <option value="7dias">
+                    Próximos 7 dias
+                  </option>
+
+                  <option value="vencidos">
+                    Já vencidos
+                  </option>
+                </select>
+
+              </div>
+
+            </div>
+
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+              <p className="text-sm text-zinc-500">
+                Mostrando{" "}
+                <span className="font-semibold text-white">
+                  {
+                    clientesFiltrados.length
+                  }
+                </span>
+                {" "}de{" "}
+                <span className="font-semibold text-white">
+                  {
+                    listaClientes.length
+                  }
+                </span>
+                {" "}clientes
+              </p>
+
+
+              <div className="flex gap-2">
+
+                <Link
+                  href="/vip-manual"
+                  className="rounded-xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:bg-zinc-900"
+                >
+                  Limpar
+                </Link>
+
+                <button
+                  type="submit"
+                  className="rounded-xl bg-blue-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-400"
+                >
+                  🔎 Filtrar
+                </button>
+
+              </div>
+
+            </div>
+
+          </form>
+
+
+          <div className="overflow-x-auto rounded-2xl border border-zinc-800">
+
+            <table className="min-w-[900px] w-full text-left">
 
 
               <thead className="bg-zinc-900 text-sm text-zinc-400">
@@ -851,7 +1234,7 @@ export default async function VipManualPage() {
               <tbody>
 
                 {
-                  listaClientes.map(
+                  clientesFiltrados.map(
                     (cliente) => (
 
                       <tr
@@ -982,7 +1365,7 @@ export default async function VipManualPage() {
 
 
                 {
-                  listaClientes.length ===
+                  clientesFiltrados.length ===
                   0 && (
 
                     <tr>
@@ -992,7 +1375,12 @@ export default async function VipManualPage() {
                         className="p-8 text-center text-zinc-500"
                       >
 
-                        Nenhum cliente manual cadastrado ainda.
+                        {
+                          listaClientes.length ===
+                          0
+                            ? "Nenhum cliente manual cadastrado ainda."
+                            : "Nenhum cliente encontrado com esses filtros."
+                        }
 
                       </td>
 
