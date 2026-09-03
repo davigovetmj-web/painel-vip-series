@@ -624,7 +624,10 @@ export default async function VipManualPage({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 
 
-          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-zinc-900 to-emerald-950/20 p-5">
+          <Link
+            href="/vip-manual?status=ativo"
+            className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-zinc-900 to-emerald-950/20 p-5 transition hover:-translate-y-0.5 hover:border-emerald-500/40 hover:bg-emerald-950/30"
+          >
 
             <p className="text-sm text-zinc-400">
               ✅ Ativos
@@ -638,11 +641,18 @@ export default async function VipManualPage({
               de {listaClientes.length} clientes
             </p>
 
-          </div>
+            <p className="mt-3 text-xs font-medium text-emerald-400/80">
+              Clique para filtrar →
+            </p>
+
+          </Link>
 
 
 
-          <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-zinc-900 to-amber-950/20 p-5">
+          <Link
+            href="/vip-manual?vencimento=hoje"
+            className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-zinc-900 to-amber-950/20 p-5 transition hover:-translate-y-0.5 hover:border-amber-500/40 hover:bg-amber-950/30"
+          >
 
             <p className="text-sm text-zinc-400">
               ⏰ Vencendo hoje
@@ -656,11 +666,18 @@ export default async function VipManualPage({
               precisam de atenção
             </p>
 
-          </div>
+            <p className="mt-3 text-xs font-medium text-amber-400/80">
+              Clique para filtrar →
+            </p>
+
+          </Link>
 
 
 
-          <div className="rounded-2xl border border-orange-500/20 bg-gradient-to-br from-zinc-900 to-orange-950/20 p-5">
+          <Link
+            href="/vip-manual?vencimento=3dias"
+            className="rounded-2xl border border-orange-500/20 bg-gradient-to-br from-zinc-900 to-orange-950/20 p-5 transition hover:-translate-y-0.5 hover:border-orange-500/40 hover:bg-orange-950/30"
+          >
 
             <p className="text-sm text-zinc-400">
               📅 Próx. 3 dias
@@ -674,11 +691,18 @@ export default async function VipManualPage({
               vencimentos próximos
             </p>
 
-          </div>
+            <p className="mt-3 text-xs font-medium text-orange-400/80">
+              Clique para filtrar →
+            </p>
+
+          </Link>
 
 
 
-          <div className="rounded-2xl border border-red-500/20 bg-gradient-to-br from-zinc-900 to-red-950/20 p-5">
+          <Link
+            href="/vip-manual?status=vencido"
+            className="rounded-2xl border border-red-500/20 bg-gradient-to-br from-zinc-900 to-red-950/20 p-5 transition hover:-translate-y-0.5 hover:border-red-500/40 hover:bg-red-950/30"
+          >
 
             <p className="text-sm text-zinc-400">
               ❌ Vencidos
@@ -692,7 +716,11 @@ export default async function VipManualPage({
               fora da validade
             </p>
 
-          </div>
+            <p className="mt-3 text-xs font-medium text-red-400/80">
+              Clique para filtrar →
+            </p>
+
+          </Link>
 
 
 
@@ -726,7 +754,10 @@ export default async function VipManualPage({
 
 
 
-          <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-zinc-900 to-blue-950/20 p-5">
+          <Link
+            href="/vip-manual#usuarios-davi-vip"
+            className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-zinc-900 to-blue-950/20 p-5 transition hover:-translate-y-0.5 hover:border-blue-500/40 hover:bg-blue-950/30"
+          >
 
             <p className="text-sm text-zinc-400">
               🤖 Aguardando cadastro
@@ -740,7 +771,11 @@ export default async function VipManualPage({
               confirmaram o Telegram
             </p>
 
-          </div>
+            <p className="mt-3 text-xs font-medium text-blue-400/80">
+              Ir para cadastros →
+            </p>
+
+          </Link>
 
         </div>
 
@@ -751,7 +786,10 @@ export default async function VipManualPage({
             USUÁRIOS DO DAVI VIP
         ====================================== */}
 
-        <div className="mt-10">
+        <div
+          id="usuarios-davi-vip"
+          className="mt-10 scroll-mt-6"
+        >
 
           <div className="mb-4">
 
