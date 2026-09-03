@@ -253,6 +253,28 @@ const anual = clientes.filter(
 
   const hoje = new Date(`${hojeTexto}T00:00:00`);
 
+
+  const pagamentosHoje = pagamentosAprovados.filter(
+    (pagamento) => {
+      const dataPagamento =
+        new Intl.DateTimeFormat("en-CA", {
+          timeZone: "America/Sao_Paulo",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(new Date(pagamento.created_at));
+
+      return dataPagamento === hojeTexto;
+    }
+  );
+
+
+  const receitaHoje = pagamentosHoje.reduce(
+    (total, pagamento) =>
+      total + pegarValor(pagamento.payload),
+    0
+  );
+
   function diferencaEmDias(
     dataVencimento: string | null
   ) {
@@ -534,7 +556,7 @@ const anual = clientes.filter(
     </p>
   </div>
 
-  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 
     {/* Pagamentos aprovados */}
     <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-zinc-900 to-purple-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-purple-500/50">
@@ -579,6 +601,35 @@ const anual = clientes.filter(
           style: "currency",
           currency: "BRL",
         })}
+      </p>
+    </div>
+
+
+    {/* Receita de hoje */}
+    <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-zinc-900 to-cyan-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-cyan-500/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-xl">
+          ⚡
+        </div>
+
+        <span className="text-xs font-medium text-cyan-400">
+          HOJE
+        </span>
+      </div>
+
+      <p className="text-sm text-zinc-400">
+        Receita de hoje
+      </p>
+
+      <p className="mt-2 text-3xl font-bold text-cyan-400">
+        {receitaHoje.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        })}
+      </p>
+
+      <p className="mt-2 text-xs text-zinc-500">
+        {pagamentosHoje.length} pagamento{pagamentosHoje.length === 1 ? "" : "s"} aprovado{pagamentosHoje.length === 1 ? "" : "s"}
       </p>
     </div>
 
