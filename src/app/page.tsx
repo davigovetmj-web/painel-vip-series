@@ -101,6 +101,65 @@ export default async function Home() {
     0
   );
 
+
+  const partesDataSaoPaulo =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }
+    ).formatToParts(new Date());
+
+
+  const anoAtual =
+    Number(
+      partesDataSaoPaulo.find(
+        (parte) => parte.type === "year"
+      )?.value ?? 0
+    );
+
+
+  const mesAtual =
+    Number(
+      partesDataSaoPaulo.find(
+        (parte) => parte.type === "month"
+      )?.value ?? 0
+    );
+
+
+  const diaAtualMes =
+    Math.max(
+      1,
+      Number(
+        partesDataSaoPaulo.find(
+          (parte) => parte.type === "day"
+        )?.value ?? 1
+      )
+    );
+
+
+  const diasNoMes =
+    new Date(
+      Date.UTC(
+        anoAtual,
+        mesAtual,
+        0
+      )
+    ).getUTCDate();
+
+
+  const receitaEstimadaMes =
+    receitaMes > 0
+      ? (
+          receitaMes /
+          diaAtualMes
+        ) *
+        diasNoMes
+      : 0;
+
   const renovacoesMes = pagamentosMes.filter(
     (pagamento) =>
       pagamento.tipo_pagamento === "renovacao"
@@ -171,7 +230,7 @@ function pegarDetalhesPagamento(payloadOriginal: unknown) {
 const mensal = clientes.filter(
   (cliente) =>
     cliente.status === "ativo" &&
-    cliente.plano?.trim().toLowerCase() === "mensal"
+    cliente.plano?.toLowerCase() === "mensal"
 ).length;
 
 const trimestral = clientes.filter(
@@ -183,7 +242,7 @@ const trimestral = clientes.filter(
 const anual = clientes.filter(
   (cliente) =>
     cliente.status === "ativo" &&
-   cliente.plano?.toLowerCase() === "anual"
+    cliente.plano?.toLowerCase() === "anual"
 ).length;
   const hojeTexto = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
@@ -393,85 +452,7 @@ const anual = clientes.filter(
   </div>
 
 </div>
-{/* ASSINANTES POR PLANO */}
-<div className="mt-8">
-  <div className="mb-4">
-    <h2 className="text-xl font-bold">
-      📦 Assinantes por plano
-    </h2>
 
-    <p className="mt-1 text-sm text-zinc-400">
-      Distribuição dos clientes ativos
-    </p>
-  </div>
-
-  <div className="grid gap-4 md:grid-cols-3">
-
-    {/* Mensal */}
-    <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-zinc-900 to-purple-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-purple-500/50">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-xl">
-          📅
-        </div>
-
-        <span className="text-xs font-medium text-purple-400">
-          MENSAL
-        </span>
-      </div>
-
-      <p className="text-sm text-zinc-400">
-        Assinantes ativos
-      </p>
-
-      <p className="mt-2 text-3xl font-bold text-purple-400">
-        {mensal}
-      </p>
-    </div>
-
-    {/* Trimestral */}
-    <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-zinc-900 to-blue-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-blue-500/50">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-xl">
-          📆
-        </div>
-
-        <span className="text-xs font-medium text-blue-400">
-          TRIMESTRAL
-        </span>
-      </div>
-
-      <p className="text-sm text-zinc-400">
-        Assinantes ativos
-      </p>
-
-      <p className="mt-2 text-3xl font-bold text-blue-400">
-        {trimestral}
-      </p>
-    </div>
-
-    {/* Anual */}
-    <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-zinc-900 to-amber-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-amber-500/50">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-xl">
-          👑
-        </div>
-
-        <span className="text-xs font-medium text-amber-400">
-          ANUAL
-        </span>
-      </div>
-
-      <p className="text-sm text-zinc-400">
-        Assinantes ativos
-      </p>
-
-      <p className="mt-2 text-3xl font-bold text-amber-400">
-        {anual}
-      </p>
-    </div>
-
-  </div>
-</div>
        <div className="mt-8 grid gap-4 md:grid-cols-3">
 
   {/* Vencem hoje */}
@@ -553,7 +534,7 @@ const anual = clientes.filter(
     </p>
   </div>
 
-  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
 
     {/* Pagamentos aprovados */}
     <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-zinc-900 to-purple-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-purple-500/50">
@@ -598,6 +579,35 @@ const anual = clientes.filter(
           style: "currency",
           currency: "BRL",
         })}
+      </p>
+    </div>
+
+
+    {/* Receita estimada */}
+    <div className="rounded-2xl border border-fuchsia-500/20 bg-gradient-to-br from-zinc-900 to-fuchsia-950/20 p-5 transition duration-200 hover:-translate-y-1 hover:border-fuchsia-500/50">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/10 text-xl">
+          📈
+        </div>
+
+        <span className="text-xs font-medium text-fuchsia-400">
+          PROJEÇÃO
+        </span>
+      </div>
+
+      <p className="text-sm text-zinc-400">
+        Receita estimada para este mês
+      </p>
+
+      <p className="mt-2 text-3xl font-bold text-fuchsia-400">
+        {receitaEstimadaMes.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        })}
+      </p>
+
+      <p className="mt-2 text-xs text-zinc-500">
+        Mantendo o ritmo atual de vendas
       </p>
     </div>
 
