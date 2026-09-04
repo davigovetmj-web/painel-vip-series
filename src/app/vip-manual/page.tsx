@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import {
   cadastrarVipManual,
+  alterarVipManualTeste,
 } from "./actions";
 
 import ConfirmarPagamentoManualButton from "@/components/confirmar-pagamento-manual-button";
@@ -126,6 +127,7 @@ type VipManualPageProps = {
     status?: string;
     plano?: string;
     vencimento?: string;
+    conta?: string;
   }>;
 };
 
@@ -168,6 +170,14 @@ export default async function VipManualPage({
     String(
       params.vencimento ??
       ""
+    )
+      .trim();
+
+
+  const filtroConta =
+    String(
+      params.conta ??
+      "real"
     )
       .trim();
 
@@ -234,7 +244,7 @@ export default async function VipManualPage({
           "vip_manual_clientes"
         )
         .select(
-          "id, nome, telegram_id, telegram_username, plano, valor, data_vencimento, status, dias_graca"
+          "id, nome, telegram_id, telegram_username, plano, valor, data_vencimento, status, dias_graca, is_test"
         )
         .order(
           "data_vencimento",
@@ -299,6 +309,14 @@ export default async function VipManualPage({
     clientes ?? [];
 
 
+  const listaClientesReais =
+    listaClientes.filter(
+      (cliente) =>
+        cliente.is_test !==
+        true
+    );
+
+
   const telegramIdsCadastrados =
     new Set(
       listaClientes.map(
@@ -333,7 +351,7 @@ export default async function VipManualPage({
 
 
   const clientesAtivos =
-    listaClientes.filter(
+    listaClientesReais.filter(
       (cliente) =>
         cliente.status ===
         "ativo"
@@ -377,7 +395,7 @@ export default async function VipManualPage({
 
 
   const vencidos =
-    listaClientes.filter(
+    listaClientesReais.filter(
       (cliente) =>
         cliente.status ===
         "vencido"
@@ -431,6 +449,20 @@ export default async function VipManualPage({
       hoje,
       7
     );
+
+
+  const totalClientesDoFiltro =
+    filtroConta ===
+      "teste"
+        ? listaClientes.filter(
+            (cliente) =>
+              cliente.is_test ===
+              true
+          ).length
+        : filtroConta ===
+            "todas"
+          ? listaClientes.length
+          : listaClientesReais.length;
 
 
   const clientesFiltrados =
@@ -514,6 +546,26 @@ export default async function VipManualPage({
             filtroPlano;
 
 
+        const ehTeste =
+          cliente.is_test ===
+          true;
+
+
+        const correspondeConta =
+          filtroConta ===
+            "todas" ||
+          (
+            filtroConta ===
+              "teste" &&
+            ehTeste
+          ) ||
+          (
+            filtroConta ===
+              "real" &&
+            !ehTeste
+          );
+
+
         let correspondeVencimento =
           true;
 
@@ -566,7 +618,8 @@ export default async function VipManualPage({
           correspondeBusca &&
           correspondeStatus &&
           correspondePlano &&
-          correspondeVencimento
+          correspondeVencimento &&
+          correspondeConta
         );
       }
     );
@@ -638,7 +691,7 @@ export default async function VipManualPage({
             </p>
 
             <p className="mt-1 text-xs text-zinc-500">
-              de {listaClientes.length} clientes
+              de {listaClientesReais.length} clientes
             </p>
 
             <p className="mt-3 text-xs font-medium text-emerald-400/80">
@@ -1053,7 +1106,7 @@ export default async function VipManualPage({
             className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
           >
 
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
 
 
               <div className="xl:col-span-2">
@@ -1185,6 +1238,35 @@ export default async function VipManualPage({
 
               </div>
 
+
+              <div>
+
+                <label className="mb-1 block text-xs text-zinc-400">
+                  Conta
+                </label>
+
+                <select
+                  name="conta"
+                  defaultValue={
+                    filtroConta
+                  }
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
+                >
+                  <option value="real">
+                    Contas reais
+                  </option>
+
+                  <option value="teste">
+                    🧪 Contas de teste
+                  </option>
+
+                  <option value="todas">
+                    Todas
+                  </option>
+                </select>
+
+              </div>
+
             </div>
 
 
@@ -1200,7 +1282,7 @@ export default async function VipManualPage({
                 {" "}de{" "}
                 <span className="font-semibold text-white">
                   {
-                    listaClientes.length
+                    totalClientesDoFiltro
                   }
                 </span>
                 {" "}clientes
@@ -1232,7 +1314,7 @@ export default async function VipManualPage({
 
           <div className="overflow-x-auto rounded-2xl border border-zinc-800">
 
-            <table className="min-w-[900px] w-full text-left">
+            <table className="min-w-[1100px] w-full text-left">
 
 
               <thead className="bg-zinc-900 text-sm text-zinc-400">
@@ -1260,6 +1342,10 @@ export default async function VipManualPage({
                   </th>
 
                   <th className="p-4">
+                    Conta
+                  </th>
+
+                  <th className="p-4">
                     Ações
                   </th>
 
@@ -1279,7 +1365,12 @@ export default async function VipManualPage({
                         key={
                           cliente.id
                         }
-                        className="border-t border-zinc-800 bg-zinc-950 transition hover:bg-zinc-900"
+                        className={
+                          cliente.is_test ===
+                          true
+                            ? "border-t border-amber-500/20 bg-amber-950/10 transition hover:bg-amber-950/20"
+                            : "border-t border-zinc-800 bg-zinc-950 transition hover:bg-zinc-900"
+                        }
                       >
 
 
@@ -1362,6 +1453,27 @@ export default async function VipManualPage({
 
                         <td className="p-4">
 
+                          {
+                            cliente.is_test ===
+                            true
+                              ? (
+                                <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
+                                  🧪 Teste
+                                </span>
+                              )
+                              : (
+                                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+                                  ✅ Real
+                                </span>
+                              )
+                          }
+
+                        </td>
+
+
+
+                        <td className="p-4">
+
   <div className="flex flex-col gap-2">
 
     <ConfirmarPagamentoManualButton
@@ -1389,6 +1501,37 @@ export default async function VipManualPage({
   }
 />
 
+
+    <form
+      action={
+        alterarVipManualTeste.bind(
+          null,
+          Number(
+            cliente.id
+          ),
+          cliente.is_test !==
+            true
+        )
+      }
+    >
+      <button
+        type="submit"
+        className={
+          cliente.is_test ===
+          true
+            ? "w-full rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20"
+            : "w-full rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/20"
+        }
+      >
+        {
+          cliente.is_test ===
+          true
+            ? "↩️ Tornar real"
+            : "🧪 Marcar como teste"
+        }
+      </button>
+    </form>
+
   </div>
 
 </td>
@@ -1409,7 +1552,7 @@ export default async function VipManualPage({
                     <tr>
 
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="p-8 text-center text-zinc-500"
                       >
 

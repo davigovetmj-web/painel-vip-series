@@ -864,8 +864,9 @@ export async function confirmarPagamentoVipManual(
   );
 }
 
+
 // ========================================
-// REENVIAR ACESSO AO VIP
+// REENVIAR ACESSO VIP MANUAL
 // ========================================
 
 export async function reenviarAcessoVipManual(
@@ -886,6 +887,7 @@ export async function reenviarAcessoVipManual(
 
 
   if (!user) {
+
     redirect(
       "/login"
     );
@@ -900,16 +902,25 @@ export async function reenviarAcessoVipManual(
     );
 
 
-  if (!clienteId) {
+  if (
+    !Number.isInteger(
+      clienteId
+    ) ||
+    clienteId <= 0
+  ) {
+
     throw new Error(
-      "Cliente não informado."
+      "Cliente inválido."
     );
   }
 
 
   const {
-    data: cliente,
-    error: clienteError
+    data:
+      cliente,
+
+    error:
+      clienteError
   } =
     await supabaseAdmin
       .from(
@@ -929,6 +940,13 @@ export async function reenviarAcessoVipManual(
     clienteError ||
     !cliente
   ) {
+
+    console.error(
+      "Erro buscando cliente para reenviar acesso:",
+      clienteError
+    );
+
+
     throw new Error(
       "Cliente não encontrado."
     );
@@ -951,12 +969,15 @@ export async function reenviarAcessoVipManual(
 
 
   if (
-    cliente.status !== "ativo" ||
+    cliente.status !==
+      "ativo" ||
     !vencimento ||
-    vencimento < hoje
+    vencimento <
+      hoje
   ) {
+
     throw new Error(
-      "O cliente não possui uma assinatura ativa."
+      "Só é possível reenviar o acesso para uma assinatura ativa."
     );
   }
 
@@ -973,20 +994,111 @@ export async function reenviarAcessoVipManual(
 
     plano:
       String(
-        cliente.plano
+        cliente.plano ??
+        ""
       ),
 
     valor:
       Number(
-        cliente.valor
+        cliente.valor ??
+        0
       ),
 
     data_vencimento:
       String(
-        cliente.data_vencimento
+        cliente.data_vencimento ??
+        ""
       )
 
   });
+
+
+  revalidatePath(
+    "/vip-manual"
+  );
+
+
+  return {
+    ok:
+      true
+  };
+}
+
+
+// ========================================
+// MARCAR / DESMARCAR CONTA DE TESTE
+// ========================================
+
+export async function alterarVipManualTeste(
+  clienteId: number,
+  isTest: boolean
+) {
+
+  const supabase =
+    await createClient();
+
+
+  const {
+    data: {
+      user
+    }
+  } =
+    await supabase.auth
+      .getUser();
+
+
+  if (!user) {
+
+    redirect(
+      "/login"
+    );
+  }
+
+
+  if (
+    !Number.isInteger(
+      clienteId
+    ) ||
+    clienteId <= 0
+  ) {
+
+    throw new Error(
+      "Cliente inválido."
+    );
+  }
+
+
+  const {
+    error
+  } =
+    await supabaseAdmin
+      .from(
+        "vip_manual_clientes"
+      )
+      .update({
+        is_test:
+          Boolean(
+            isTest
+          )
+      })
+      .eq(
+        "id",
+        clienteId
+      );
+
+
+  if (error) {
+
+    console.error(
+      "Erro alterando conta de teste do VIP Manual:",
+      error
+    );
+
+
+    throw new Error(
+      "Não foi possível alterar a conta de teste."
+    );
+  }
 
 
   revalidatePath(
