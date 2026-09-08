@@ -7,18 +7,44 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+type ProdutoWiapy = {
+  id?: string;
+  title?: string;
+  name?: string;
+  amount?: number | string;
+  price?: number | string;
+};
+
 type PayloadPagamento = {
   sale_amount?: number | string;
 
   customer?: {
     name?: string;
     email?: string;
+    phone?: string;
+    mobile_phone?: string;
   };
 
   product?: {
+    id?: string | number;
     name?: string;
     price?: number | string;
   };
+
+  payment?: {
+    id?: string;
+    status?: string;
+    type?: string;
+    amount?: number | string;
+  };
+
+  checkout?: {
+    id?: string;
+    title?: string;
+    amount?: number | string;
+  };
+
+  products?: ProdutoWiapy[];
 };
   
 export default async function Home() {
@@ -42,9 +68,9 @@ export default async function Home() {
   } = await supabaseAdmin
     .from("webhook_events")
     .select(
-      "id, created_at, event, external_id, payload, processed, tipo_pagamento"
+      "id, created_at, gateway, event, external_id, payload, processed, tipo_pagamento"
     )
-    .eq("gateway", "lowify")
+    .in("gateway", ["lowify", "wiapy"])
     .eq("event", "sale.paid")
     .eq("processed", true)
     .order("created_at", { ascending: false });
@@ -85,8 +111,23 @@ export default async function Home() {
       new Date(pagamento.created_at) >= inicioMes
   );
 
-  function pegarValor(payloadOriginal: unknown) {
-    const payload = payloadOriginal as PayloadPagamento | null;
+  function pegarValor(
+    payloadOriginal: unknown,
+    gateway?: string | null
+  ) {
+    const payload =
+      payloadOriginal as PayloadPagamento | null;
+
+    if (gateway === "wiapy") {
+      const valorCentavos =
+        Number(payload?.checkout?.amount) ||
+        Number(payload?.payment?.amount) ||
+        Number(payload?.products?.[0]?.amount) ||
+        Number(payload?.products?.[0]?.price) ||
+        0;
+
+      return valorCentavos / 100;
+    }
 
     return (
       Number(payload?.sale_amount) ||
@@ -97,7 +138,7 @@ export default async function Home() {
 
   const receitaMes = pagamentosMes.reduce(
     (total, pagamento) =>
-      total + pegarValor(pagamento.payload),
+      total + pegarValor(pagamento.payload, pagamento.gateway),
     0
   );
 
@@ -167,7 +208,7 @@ export default async function Home() {
 
   const receitaRenovacoesMes = renovacoesMes.reduce(
     (total, pagamento) =>
-      total + pegarValor(pagamento.payload),
+      total + pegarValor(pagamento.payload, pagamento.gateway),
     0
   );
 const ultimasVendas = pagamentosAprovados.slice(0, 10);
@@ -183,7 +224,10 @@ function formatarDataHora(data: string) {
   });
 }
 
-function pegarDetalhesPagamento(payloadOriginal: unknown) {
+function pegarDetalhesPagamento(
+  payloadOriginal: unknown,
+  gateway?: string | null
+) {
   const payload =
     payloadOriginal as PayloadPagamento | null;
 
@@ -191,11 +235,22 @@ function pegarDetalhesPagamento(payloadOriginal: unknown) {
     payload?.customer?.name || "Cliente";
 
   const produto =
-    payload?.product?.name || "Plano não identificado";
+    gateway === "wiapy"
+      ? (
+          payload?.products?.[0]?.title ||
+          payload?.products?.[0]?.name ||
+          payload?.checkout?.title ||
+          "Plano não identificado"
+        )
+      : (
+          payload?.product?.name ||
+          "Plano não identificado"
+        );
 
   let plano = produto;
 
-  const produtoMinusculo = produto.toLowerCase();
+  const produtoMinusculo =
+    produto.toLowerCase();
 
   if (produtoMinusculo.includes("mensal")) {
     plano = "Mensal";
@@ -208,7 +263,11 @@ function pegarDetalhesPagamento(payloadOriginal: unknown) {
   return {
     nome,
     plano,
-    valor: pegarValor(payloadOriginal),
+    valor:
+      pegarValor(
+        payloadOriginal,
+        gateway
+      ),
   };
 }
   const total = clientes.length;
@@ -271,7 +330,7 @@ const anual = clientes.filter(
 
   const receitaHoje = pagamentosHoje.reduce(
     (total, pagamento) =>
-      total + pegarValor(pagamento.payload),
+      total + pegarValor(pagamento.payload, pagamento.gateway),
     0
   );
 
@@ -739,7 +798,10 @@ const anual = clientes.filter(
       <tbody>
         {ultimasVendas.map((pagamento) => {
           const detalhes =
-            pegarDetalhesPagamento(pagamento.payload);
+            pegarDetalhesPagamento(
+              pagamento.payload,
+              pagamento.gateway
+            );
 
           const renovacao =
             pagamento.tipo_pagamento === "renovacao";
