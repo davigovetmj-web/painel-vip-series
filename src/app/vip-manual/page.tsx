@@ -121,6 +121,45 @@ function adicionarDiasISO(
 }
 
 
+function dataHoraEmSaoPaulo(
+  data: string | null
+) {
+  if (!data) {
+    return "";
+  }
+
+  const dataConvertida =
+    new Date(data);
+
+  if (
+    Number.isNaN(
+      dataConvertida.getTime()
+    )
+  ) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-CA",
+    {
+      timeZone:
+        "America/Sao_Paulo",
+
+      year:
+        "numeric",
+
+      month:
+        "2-digit",
+
+      day:
+        "2-digit"
+    }
+  ).format(
+    dataConvertida
+  );
+}
+
+
 type VipManualPageProps = {
   searchParams?: Promise<{
     q?: string;
@@ -214,6 +253,11 @@ export default async function VipManualPage({
     {
       data: planos,
       error: planosError
+    },
+
+    {
+      data: pagamentos,
+      error: pagamentosError
     }
 
   ] =
@@ -270,6 +314,21 @@ export default async function VipManualPage({
           {
             ascending: true
           }
+        ),
+
+
+      supabaseAdmin
+        .from(
+          "vip_manual_pagamentos"
+        )
+        .select(
+          "id, cliente_id, telegram_id, nome, plano, valor, vencimento_anterior, vencimento_novo, confirmado_em, confirmacao_id"
+        )
+        .order(
+          "confirmado_em",
+          {
+            ascending: false
+          }
         )
 
     ]);
@@ -278,7 +337,8 @@ export default async function VipManualPage({
   const erro =
     usuariosError ||
     clientesError ||
-    planosError;
+    planosError ||
+    pagamentosError;
 
 
   if (erro) {
@@ -307,6 +367,9 @@ export default async function VipManualPage({
 
   const listaClientes =
     clientes ?? [];
+
+  const listaPagamentos =
+    pagamentos ?? [];
 
 
   const listaClientesReais =
@@ -439,6 +502,93 @@ export default async function VipManualPage({
             )
         );
       },
+      0
+    );
+
+
+  // =====================================
+  // RENOVAÇÕES E PERDAS DO MÊS
+  // =====================================
+
+  const mesAtual =
+    hoje.slice(0, 7);
+
+
+  const idsClientesReais =
+    new Set(
+      listaClientesReais.map(
+        (cliente) =>
+          Number(cliente.id)
+      )
+    );
+
+
+  const renovacoesMes =
+    listaPagamentos.filter(
+      (pagamento) => {
+        const dataConfirmacao =
+          dataHoraEmSaoPaulo(
+            String(
+              pagamento.confirmado_em ??
+              ""
+            )
+          );
+
+        return (
+          idsClientesReais.has(
+            Number(
+              pagamento.cliente_id
+            )
+          ) &&
+          dataConfirmacao.startsWith(
+            mesAtual
+          )
+        );
+      }
+    );
+
+
+  const receitaRenovacoesMes =
+    renovacoesMes.reduce(
+      (total, pagamento) =>
+        total +
+        Number(
+          pagamento.valor ??
+          0
+        ),
+      0
+    );
+
+
+  const clientesNaoRenovadosMes =
+    listaClientesReais.filter(
+      (cliente) => {
+        const vencimento =
+          String(
+            cliente.data_vencimento ??
+            ""
+          )
+            .slice(0, 10);
+
+        return (
+          cliente.status ===
+            "vencido" &&
+          vencimento.startsWith(
+            mesAtual
+          )
+        );
+      }
+    );
+
+
+  const perdaNaoRenovacaoMes =
+    clientesNaoRenovadosMes.reduce(
+      (total, cliente) =>
+        total +
+        Number(
+          cliente.valor ??
+          0
+        ),
       0
     );
 
@@ -674,7 +824,7 @@ export default async function VipManualPage({
             RESUMO
         ====================================== */}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
 
 
           <Link
@@ -801,6 +951,66 @@ export default async function VipManualPage({
 
             <p className="mt-1 text-xs text-zinc-500">
               equivalente dos ativos
+            </p>
+
+          </div>
+
+
+
+          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-zinc-900 to-emerald-950/20 p-5">
+
+            <p className="text-sm text-zinc-400">
+              🔄 Receita de renovação
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-emerald-400">
+              {
+                receitaRenovacoesMes
+                  .toLocaleString(
+                    "pt-BR",
+                    {
+                      style:
+                        "currency",
+
+                      currency:
+                        "BRL"
+                    }
+                  )
+              }
+            </p>
+
+            <p className="mt-1 text-xs text-zinc-500">
+              {renovacoesMes.length} renovaç{renovacoesMes.length === 1 ? "ão" : "ões"} neste mês
+            </p>
+
+          </div>
+
+
+
+          <div className="rounded-2xl border border-rose-500/20 bg-gradient-to-br from-zinc-900 to-rose-950/20 p-5">
+
+            <p className="text-sm text-zinc-400">
+              📉 Perda por não renovação
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-rose-400">
+              {
+                perdaNaoRenovacaoMes
+                  .toLocaleString(
+                    "pt-BR",
+                    {
+                      style:
+                        "currency",
+
+                      currency:
+                        "BRL"
+                    }
+                  )
+              }
+            </p>
+
+            <p className="mt-1 text-xs text-zinc-500">
+              {clientesNaoRenovadosMes.length} cliente{clientesNaoRenovadosMes.length === 1 ? "" : "s"} vencido{clientesNaoRenovadosMes.length === 1 ? "" : "s"} neste mês
             </p>
 
           </div>
