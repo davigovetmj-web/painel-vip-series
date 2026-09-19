@@ -1692,9 +1692,18 @@ export default async function VipManualPage({
           cliente.id
         )
       }
+
       clienteNome={
         cliente.nome ||
         "Cliente"
+      }
+
+      planoAtual={
+        cliente.plano
+      }
+
+      planos={
+        listaPlanos
       }
     />
 

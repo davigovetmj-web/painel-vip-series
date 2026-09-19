@@ -621,10 +621,26 @@ export async function confirmarPagamentoVipManual(
     ).trim();
 
 
+  const planoId =
+    Number(
+      formData.get(
+        "plano_id"
+      )
+    );
+
+
   if (!clienteId) {
 
     throw new Error(
       "Cliente não informado."
+    );
+  }
+
+
+  if (!planoId) {
+
+    throw new Error(
+      "Plano não informado."
     );
   }
 
@@ -716,7 +732,10 @@ export async function confirmarPagamentoVipManual(
           clienteId,
 
         p_confirmacao_id:
-          confirmacaoId
+          confirmacaoId,
+
+        p_plano_id:
+          planoId
 
       }
     );
