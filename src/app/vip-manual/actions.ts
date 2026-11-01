@@ -1048,6 +1048,33 @@ export async function reenviarAcessoVipManual(
 // MARCAR / DESMARCAR CONTA DE TESTE
 // ========================================
 
+export async function naoCadastrarVipManual(telegramId: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  if (!Number.isSafeInteger(telegramId) || telegramId <= 0) {
+    return { ok: false as const, error: "Usuário inválido." };
+  }
+  const { data: clientes, error: clienteError } = await supabaseAdmin
+    .from("vip_manual_clientes").select("id")
+    .eq("telegram_id", telegramId).limit(1);
+  if (clienteError) {
+    return { ok: false as const, error: "Não foi possível verificar o cadastro." };
+  }
+  if (clientes?.length) {
+    return { ok: false as const, error: "Essa pessoa já está cadastrada. Use as ações na lista de clientes." };
+  }
+  const { data, error } = await supabaseAdmin
+    .from("telegram_manual_usuarios")
+    .update({ descartado_em: new Date().toISOString() })
+    .eq("telegram_id", telegramId).select("telegram_id").maybeSingle();
+  if (error || !data) {
+    return { ok: false as const, error: "Não foi possível retirar essa pessoa da lista." };
+  }
+  revalidatePath("/vip-manual");
+  return { ok: true as const };
+}
+
 export async function removerVipManual(clienteId: number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

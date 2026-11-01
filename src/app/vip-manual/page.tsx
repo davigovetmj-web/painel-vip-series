@@ -10,6 +10,7 @@ import {
 
 import ConfirmarPagamentoManualButton from "@/components/confirmar-pagamento-manual-button";
 import RemoverVipManualButton from "@/components/remover-vip-manual-button";
+import NaoCadastrarManualButton from "@/components/nao-cadastrar-manual-button";
 import ReenviarAcessoManualButton from "@/components/reenviar-acesso-manual-button";
 
 
@@ -276,6 +277,7 @@ export default async function VipManualPage({
           "is",
           null
         )
+        .is("descartado_em", null)
         .order(
           "ultimo_contato_em",
           {
@@ -1251,7 +1253,7 @@ export default async function VipManualPage({
 
 
 
-                    <div className="flex items-end">
+                    <div className="flex flex-col justify-end gap-2">
 
                       <button
                         type="submit"
@@ -1259,6 +1261,11 @@ export default async function VipManualPage({
                       >
                         ✅ Cadastrar
                       </button>
+
+                      <NaoCadastrarManualButton
+                        telegramId={Number(usuario.telegram_id)}
+                        nome={usuario.nome || "Sem nome"}
+                      />
 
                     </div>
 
