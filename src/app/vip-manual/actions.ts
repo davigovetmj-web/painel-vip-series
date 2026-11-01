@@ -163,7 +163,7 @@ function adicionarDias(
 
 async function chamarBotManual(
   payload:
-    AcaoBotManual
+    AcaoBotManual | { action: "remover_cliente"; telegram_id: number }
 ) {
 
   const supabaseUrl =
@@ -1047,6 +1047,45 @@ export async function reenviarAcessoVipManual(
 // ========================================
 // MARCAR / DESMARCAR CONTA DE TESTE
 // ========================================
+
+export async function removerVipManual(clienteId: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  if (!Number.isSafeInteger(clienteId) || clienteId <= 0) {
+    return { ok: false as const, error: "Cliente inválido." };
+  }
+  const { data: cliente, error: buscaError } = await supabaseAdmin
+    .from("vip_manual_clientes").select("id, telegram_id")
+    .eq("id", clienteId).single();
+  if (buscaError || !cliente) {
+    return { ok: false as const, error: "Cliente não encontrado." };
+  }
+
+  // Bloqueia novos convites antes de solicitar a remoção ao Telegram.
+  // O histórico financeiro permanece intacto.
+  const { error: updateError } = await supabaseAdmin
+    .from("vip_manual_clientes")
+    .update({ status: "vencido", updated_at: new Date().toISOString() })
+    .eq("id", clienteId);
+  if (updateError) {
+    return { ok: false as const, error: "Não foi possível bloquear o acesso." };
+  }
+  revalidatePath("/vip-manual");
+  if (cliente.telegram_id != null) {
+    try {
+      await chamarBotManual({
+        action: "remover_cliente", telegram_id: Number(cliente.telegram_id),
+      });
+    } catch {
+      return {
+        ok: false as const,
+        error: "Acesso vencido no painel, mas a remoção do Telegram não foi confirmada. Clique em Remover cliente novamente para tentar.",
+      };
+    }
+  }
+  return { ok: true as const };
+}
 
 export async function alterarVipManualTeste(
   clienteId: number,

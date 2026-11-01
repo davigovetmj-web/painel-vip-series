@@ -9,6 +9,7 @@ import {
 } from "./actions";
 
 import ConfirmarPagamentoManualButton from "@/components/confirmar-pagamento-manual-button";
+import RemoverVipManualButton from "@/components/remover-vip-manual-button";
 import ReenviarAcessoManualButton from "@/components/reenviar-acesso-manual-button";
 
 
@@ -1720,6 +1721,11 @@ export default async function VipManualPage({
   }
 />
 
+
+    <RemoverVipManualButton
+      clienteId={Number(cliente.id)}
+      clienteNome={cliente.nome || "Cliente"}
+    />
 
     <form
       action={
